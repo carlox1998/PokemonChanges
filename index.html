@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokédex - Comparador de Cambios</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        pokeRed: '#EE1515',
+                        pokeDarkRed: '#CC0000',
+                        pokeBlue: '#3B4CCA',
+                        pokeYellow: '#FFDE00',
+                        pokeGold: '#B3A125'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Type Colors */
+        .type-normal { background-color: #A8A878; color: #fff; }
+        .type-fuego { background-color: #F08030; color: #fff; }
+        .type-agua { background-color: #6890F0; color: #fff; }
+        .type-planta { background-color: #78C850; color: #fff; }
+        .type-eléctrico { background-color: #F8D030; color: #1e293b; }
+        .type-hielo { background-color: #98D8D8; color: #1e293b; }
+        .type-lucha { background-color: #C03028; color: #fff; }
+        .type-veneno { background-color: #A040A0; color: #fff; }
+        .type-tierra { background-color: #E0C068; color: #1e293b; }
+        .type-volador { background-color: #A890F0; color: #fff; }
+        .type-psíquico { background-color: #F85888; color: #fff; }
+        .type-bicho { background-color: #A8B820; color: #fff; }
+        .type-roca { background-color: #B8A038; color: #fff; }
+        .type-fantasma { background-color: #70559B; color: #fff; }
+        .type-dragón { background-color: #7038F8; color: #fff; }
+        .type-acero { background-color: #B8B8D0; color: #1e293b; }
+        .type-hada { background-color: #EE99AC; color: #1e293b; }
+        .type-siniestro { background-color: #705848; color: #fff; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .tab-btn { transition: all 0.25s ease; }
+    </style>
+</head>
+<body class="font-sans antialiased pb-12">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="resetFilter()">
+                    <div class="w-10 h-10 rounded-full bg-pokeRed flex items-center justify-center shadow-lg border-2 border-white/20 relative overflow-hidden group">
+                        <div class="absolute inset-x-0 bottom-0 h-1/2 bg-white"></div>
+                        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-slate-900 z-10"></div>
+                        <div class="w-3 h-3 rounded-full bg-white border-2 border-slate-900 z-20 group-hover:scale-125 transition-transform"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-red-500 via-yellow-400 to-blue-500 bg-clip-text text-transparent">
+                            Pokédex
+                        </h1>
+                        <p class="text-xs text-slate-400 font-medium">Comparativa: Original vs Modificado</p>
+                    </div>
+                </div>
+
+                <div class="w-full sm:w-96 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="searchInput"
+                        placeholder="Buscar Pokémon por nombre o ID..."
+                        class="w-full pl-10 pr-10 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm placeholder-slate-400 text-white focus:outline-none focus:ring-2 focus:ring-pokeRed focus:border-transparent transition-all shadow-inner"
+                        oninput="filterPokemon()"
+                    >
+                    <button 
+                        id="clearSearch" 
+                        onclick="clearSearchInput()" 
+                        class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white"
+                    >
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        
+        <!-- Pestañas Principales -->
+        <div class="flex justify-center mb-8">
+            <div class="inline-flex p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-lg">
+                <button onclick="switchMainTab('stats')" id="mainTabStats" class="px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-pokeRed shadow-md flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <span>Stats y Tipos</span>
+                </button>
+                <button onclick="switchMainTab('evolutions')" id="mainTabEvolutions" class="px-6 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-code-branch"></i>
+                    <span>Evoluciones</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="sectionTitle" class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-list-ul text-pokeRed"></i>
+                <span>Pokémon con Cambios en Stats y Tipos</span>
+            </h2>
+            <span id="counterText" class="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700 font-medium">
+                Cargando...
+            </span>
+        </div>
+
+        <!-- Grid para Stats y Tipos -->
+        <div id="pokemonGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+
+        <!-- Grid para Evoluciones (Ahora con la misma estructura y clases de diseño) -->
+        <div id="evolutionGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+
+        <div id="noResults" class="hidden flex-col items-center justify-center py-16 text-center">
+            <div class="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-3xl mb-4 border border-slate-700">
+                <i class="fa-solid fa-ghost"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-300">No se encontraron Pokémon</h3>
+            <p class="text-sm text-slate-400 mt-1">Prueba con otro término de búsqueda</p>
+            <button onclick="clearSearchInput()" class="mt-4 px-4 py-2 bg-pokeRed hover:bg-red-600 text-white text-xs font-bold uppercase rounded-lg transition-colors">
+                Ver todos
+            </button>
+        </div>
+    </main>
+
+    <!-- Modal Stats y Tipos -->
+    <div id="pokemonModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-modal rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-700/60" id="modalContainer">
+            
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+                <div class="flex items-center gap-2">
+                    <span id="modalPokemonId" class="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700">#000</span>
+                    <h3 id="modalPokemonName" class="text-xl font-bold text-white capitalize tracking-wide">Pokemon Name</h3>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-900/90 rounded-xl mb-6 border border-slate-800">
+                    <button id="tabBeforeBtn" onclick="switchTab('before')" class="tab-btn py-2.5 px-4 rounded-lg font-bold text-sm text-slate-400 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-history text-xs"></i>
+                        <span>Original</span>
+                    </button>
+                    <button id="tabModifiedBtn" onclick="switchTab('modified')" class="tab-btn py-2.5 px-4 rounded-lg font-bold text-sm text-white bg-pokeRed shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                        <span>Modificado</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-slate-900/40 rounded-2xl border border-slate-800/80 relative overflow-hidden group">
+                        <div class="relative w-36 h-36 flex items-center justify-center mb-3">
+                            <img id="modalPokemonImg" src="" alt="Pokemon" class="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:scale-105">
+                        </div>
+                        <div id="modalTypesContainer" class="flex flex-wrap gap-2 justify-center mt-1"></div>
+                    </div>
+
+                    <div class="md:col-span-7 flex flex-col justify-center">
+                        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                            <span id="modeTitle">ESTADÍSTICAS</span>
+                            <span id="totalStats" class="text-xs text-yellow-400 font-bold">BST: 0</span>
+                        </div>
+                        <div id="statsContainer" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Evoluciones (Solo método modificado) -->
+    <div id="evoModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-modal rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-700/60" id="evoModalContainer">
+            
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+                <div class="flex items-center gap-2">
+                    <span id="evoModalId" class="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700">#000</span>
+                    <h3 id="evoModalName" class="text-xl font-bold text-white capitalize tracking-wide">Pokemon Name</h3>
+                </div>
+                <button onclick="closeEvoModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <div class="flex items-center justify-around bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
+                    <div class="flex flex-col items-center">
+                        <img id="evoPreImg" src="" class="w-20 h-20 object-contain mb-1" alt="Pre-evo">
+                        <span id="evoPreName" class="text-xs font-bold capitalize text-slate-300"></span>
+                    </div>
+                    <div class="text-blue-400 flex flex-col items-center px-2">
+                        <i class="fa-solid fa-arrow-right-long text-xl animate-pulse"></i>
+                        <span class="text-[10px] uppercase font-bold tracking-wider mt-1 text-slate-400">Evoluciona</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <img id="evoPostImg" src="" class="w-20 h-20 object-contain mb-1" alt="Post-evo">
+                        <span id="evoPostName" class="text-xs font-bold capitalize text-slate-200"></span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-950/30 p-4 rounded-2xl border border-blue-900/50">
+                    <div class="flex items-center gap-2 text-blue-400 mb-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Nuevo Método de Evolución</span>
+                    </div>
+                    <p id="evoMethodText" class="text-sm font-medium text-slate-200 leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const POKEMON_DATA = [
+    {
+        id: 38,
+        name: "Ninetales",
+        spriteId: 38,
+        before: { types: ["fuego"], stats: { hp: 73, ataque: 76, defensa: 75, spAtaque: 81, spDefensa: 100, velocidad: 100 } },
+        modified: { types: ["fuego", "psíquico"], stats: { hp: 73, ataque: 76, defensa: 75, spAtaque: 100, spDefensa: 100, velocidad: 105 } }
+    },
+    {
+        id: 51,
+        name: "Dugtrio",
+        spriteId: 51,
+        before: { types: ["tierra"], stats: { hp: 35, ataque: 100, defensa: 50, spAtaque: 50, spDefensa: 70, velocidad: 120 } },
+        modified: { types: ["tierra", "roca"], stats: { hp: 35, ataque: 80, defensa: 50, spAtaque: 50, spDefensa: 70, velocidad: 120 } }
+    },
+    {
+        id: 54,
+        name: "Psyduck",
+        spriteId: 54,
+        before: { types: ["agua"], stats: { hp: 50, ataque: 52, defensa: 48, spAtaque: 65, spDefensa: 50, velocidad: 55 } },
+        modified: { types: ["agua", "psíquico"], stats: { hp: 50, ataque: 52, defensa: 48, spAtaque: 65, spDefensa: 50, velocidad: 55 } }
+    },
+    {
+        id: 55,
+        name: "Golduck",
+        spriteId: 55,
+        before: { types: ["agua"], stats: { hp: 80, ataque: 82, defensa: 78, spAtaque: 95, spDefensa: 80, velocidad: 85 } },
+        modified: { types: ["agua", "psíquico"], stats: { hp: 80, ataque: 70, defensa: 78, spAtaque: 90, spDefensa: 140, velocidad: 60 } }
+    },
+    {
+        id: 78,
+        name: "Rapidash",
+        spriteId: 78,
+        before: { types: ["fuego"], stats: { hp: 65, ataque: 100, defensa: 70, spAtaque: 80, spDefensa: 80, velocidad: 105 } },
+        modified: { types: ["fuego", "volador"], stats: { hp: 65, ataque: 100, defensa: 70, spAtaque: 80, spDefensa: 80, velocidad: 105 } }
+    },
+    {
+        id: 94,
+        name: "Gengar",
+        spriteId: 94,
+        before: { types: ["fantasma", "veneno"], stats: { hp: 60, ataque: 65, defensa: 60, spAtaque: 130, spDefensa: 75, velocidad: 110 } },
+        modified: { types: ["fantasma", "siniestro"], stats: { hp: 75, ataque: 60, defensa: 80, spAtaque: 135, spDefensa: 80, velocidad: 110 } }
+    },
+    {
+        id: 97,
+        name: "Hypno",
+        spriteId: 97,
+        before: { types: ["psíquico"], stats: { hp: 85, ataque: 73, defensa: 70, spAtaque: 73, spDefensa: 115, velocidad: 67 } },
+        modified: { types: ["psíquico", "siniestro"], stats: { hp: 85, ataque: 73, defensa: 70, spAtaque: 73, spDefensa: 115, velocidad: 67 } }
+    },
+    {
+        id: 113,
+        name: "Chansey",
+        spriteId: 113,
+        before: { types: ["normal"], stats: { hp: 250, ataque: 5, defensa: 5, spAtaque: 35, spDefensa: 105, velocidad: 50 } },
+        modified: { types: ["hada"], stats: { hp: 250, ataque: 5, defensa: 5, spAtaque: 35, spDefensa: 105, velocidad: 50 } }
+    },
+    {
+        id: 130,
+        name: "Gyarados",
+        spriteId: 130,
+        before: { types: ["agua", "volador"], stats: { hp: 95, ataque: 125, defensa: 79, spAtaque: 60, spDefensa: 100, velocidad: 81 } },
+        modified: { types: ["agua", "dragón"], stats: { hp: 80, ataque: 140, defensa: 90, spAtaque: 50, spDefensa: 90, velocidad: 80 } }
+    },
+    {
+        id: 154,
+        name: "Meganium",
+        spriteId: 154,
+        before: { types: ["planta"], stats: { hp: 80, ataque: 82, defensa: 100, spAtaque: 83, spDefensa: 100, velocidad: 80 } },
+        modified: { types: ["planta", "hada"], stats: { hp: 80, ataque: 82, defensa: 100, spAtaque: 83, spDefensa: 100, velocidad: 80 } }
+    },
+    {
+        id: 157,
+        name: "Typhlosion",
+        spriteId: 157,
+        before: { types: ["fuego"], stats: { hp: 78, ataque: 84, defensa: 78, spAtaque: 109, spDefensa: 85, velocidad: 100 } },
+        modified: { types: ["fuego", "tierra"], stats: { hp: 78, ataque: 84, defensa: 78, spAtaque: 109, spDefensa: 85, velocidad: 100 } }
+    },
+    {
+        id: 160,
+        name: "Feraligatr",
+        spriteId: 160,
+        before: { types: ["agua"], stats: { hp: 85, ataque: 105, defensa: 100, spAtaque: 79, spDefensa: 83, velocidad: 78 } },
+        modified: { types: ["agua", "dragón"], stats: { hp: 85, ataque: 105, defensa: 100, spAtaque: 79, spDefensa: 83, velocidad: 78 } }
+    },
+    {
+        id: 164,
+        name: "Noctowl",
+        spriteId: 164,
+        before: { types: ["normal", "volador"], stats: { hp: 100, ataque: 50, defensa: 50, spAtaque: 86, spDefensa: 96, velocidad: 70 } },
+        modified: { types: ["psíquico", "volador"], stats: { hp: 100, ataque: 50, defensa: 50, spAtaque: 106, spDefensa: 116, velocidad: 70 } }
+    },
+    {
+        id: 185,
+        name: "Sudowoodo",
+        spriteId: 185,
+        before: { types: ["roca"], stats: { hp: 70, ataque: 100, defensa: 115, spAtaque: 30, spDefensa: 65, velocidad: 30 } },
+        modified: { types: ["roca", "planta"], stats: { hp: 75, ataque: 110, defensa: 115, spAtaque: 30, spDefensa: 85, velocidad: 25 } }
+    },
+    {
+        id: 186,
+        name: "Politoed",
+        spriteId: 186,
+        before: { types: ["agua"], stats: { hp: 90, ataque: 75, defensa: 75, spAtaque: 90, spDefensa: 100, velocidad: 70 } },
+        modified: { types: ["agua", "veneno"], stats: { hp: 90, ataque: 75, defensa: 75, spAtaque: 90, spDefensa: 100, velocidad: 70 } }
+    },
+    {
+        id: 192,
+        name: "Sunflora",
+        spriteId: 192,
+        before: { types: ["planta"], stats: { hp: 75, ataque: 75, defensa: 55, spAtaque: 105, spDefensa: 85, velocidad: 30 } },
+        modified: { types: ["planta", "fuego"], stats: { hp: 90, ataque: 75, defensa: 75, spAtaque: 115, spDefensa: 100, velocidad: 50 } }
+    },
+    {
+        id: 203,
+        name: "Girafarig",
+        spriteId: 203,
+        before: { types: ["normal", "psíquico"], stats: { hp: 70, ataque: 80, defensa: 65, spAtaque: 90, spDefensa: 65, velocidad: 85 } },
+        modified: { types: ["eléctrico", "psíquico"], stats: { hp: 70, ataque: 80, defensa: 65, spAtaque: 90, spDefensa: 65, velocidad: 85 } }
+    },
+    {
+        id: 206,
+        name: "Dunsparce",
+        spriteId: 206,
+        before: { types: ["normal"], stats: { hp: 100, ataque: 70, defensa: 70, spAtaque: 65, spDefensa: 65, velocidad: 45 } },
+        modified: { types: ["normal", "dragón"], stats: { hp: 130, ataque: 120, defensa: 120, spAtaque: 95, spDefensa: 95, velocidad: 50 } }
+    },
+    {
+        id: 225,
+        name: "Delibird",
+        spriteId: 225,
+        before: { types: ["hielo", "volador"], stats: { hp: 45, ataque: 55, defensa: 45, spAtaque: 65, spDefensa: 45, velocidad: 75 } },
+        modified: { types: ["hielo", "volador"], stats: { hp: 100, ataque: 65, defensa: 67, spAtaque: 88, spDefensa: 67, velocidad: 107 } }
+    },
+    {
+        id: 242,
+        name: "Blissey",
+        spriteId: 242,
+        before: { types: ["normal"], stats: { hp: 255, ataque: 10, defensa: 10, spAtaque: 75, spDefensa: 135, velocidad: 55 } },
+        modified: { types: ["hada"], stats: { hp: 200, ataque: 10, defensa: 70, spAtaque: 75, spDefensa: 135, velocidad: 50 } }
+    },
+    {
+        id: 283,
+        name: "Surskit",
+        spriteId: 283,
+        before: { types: ["bicho", "agua"], stats: { hp: 40, ataque: 30, defensa: 32, spAtaque: 50, spDefensa: 52, velocidad: 65 } },
+        modified: { types: ["agua"], stats: { hp: 40, ataque: 30, defensa: 32, spAtaque: 50, spDefensa: 52, velocidad: 65 } }
+    },
+    {
+        id: 284,
+        name: "Masquerain",
+        spriteId: 284,
+        before: { types: ["bicho", "volador"], stats: { hp: 70, ataque: 60, defensa: 62, spAtaque: 100, spDefensa: 82, velocidad: 80 } },
+        modified: { types: ["agua", "volador"], stats: { hp: 70, ataque: 60, defensa: 62, spAtaque: 80, spDefensa: 82, velocidad: 60 } }
+    },
+    {
+        id: 289,
+        name: "Slaking",
+        spriteId: 289,
+        before: { types: ["normal"], stats: { hp: 150, ataque: 160, defensa: 100, spAtaque: 95, spDefensa: 65, velocidad: 100 } },
+        modified: { types: ["normal", "lucha"], stats: { hp: 140, ataque: 140, defensa: 95, spAtaque: 95, spDefensa: 65, velocidad: 95 } }
+    },
+    {
+        id: 321,
+        name: "Wailord",
+        spriteId: 321,
+        before: { types: ["agua"], stats: { hp: 170, ataque: 90, defensa: 45, spAtaque: 90, spDefensa: 45, velocidad: 60 } },
+        modified: { types: ["agua", "volador"], stats: { hp: 170, ataque: 90, defensa: 75, spAtaque: 90, spDefensa: 75, velocidad: 60 } }
+    },
+    {
+        id: 330,
+        name: "Flygon",
+        spriteId: 330,
+        before: { types: ["tierra", "dragón"], stats: { hp: 80, ataque: 100, defensa: 80, spAtaque: 80, spDefensa: 80, velocidad: 100 } },
+        modified: { types: ["bicho", "dragón"], stats: { hp: 80, ataque: 110, defensa: 80, spAtaque: 100, spDefensa: 80, velocidad: 105 } }
+    },
+    {
+        id: 337,
+        name: "Lunatone",
+        spriteId: 337,
+        before: { types: ["roca", "psíquico"], stats: { hp: 90, ataque: 55, defensa: 65, spAtaque: 95, spDefensa: 85, velocidad: 70 } },
+        modified: { types: ["roca", "hielo"], stats: { hp: 77, ataque: 55, defensa: 65, spAtaque: 100, spDefensa: 97, velocidad: 84 } }
+    },
+    {
+        id: 338,
+        name: "Solrock",
+        spriteId: 338,
+        before: { types: ["roca", "psíquico"], stats: { hp: 90, ataque: 95, defensa: 85, spAtaque: 55, spDefensa: 65, velocidad: 70 } },
+        modified: { types: ["roca", "fuego"], stats: { hp: 77, ataque: 97, defensa: 100, spAtaque: 55, spDefensa: 65, velocidad: 84 } }
+    },
+    {
+        id: 357,
+        name: "Tropius",
+        spriteId: 357,
+        before: { types: ["planta", "volador"], stats: { hp: 99, ataque: 68, defensa: 83, spAtaque: 72, spDefensa: 87, velocidad: 51 } },
+        modified: { types: ["planta", "dragón"], stats: { hp: 125, ataque: 88, defensa: 110, spAtaque: 92, spDefensa: 130, velocidad: 61 } }
+    },
+    {
+        id: 359,
+        name: "Absol",
+        spriteId: 359,
+        before: { types: ["siniestro"], stats: { hp: 65, ataque: 130, defensa: 60, spAtaque: 75, spDefensa: 60, velocidad: 75 } },
+        modified: { types: ["siniestro", "hada"], stats: { hp: 65, ataque: 130, defensa: 60, spAtaque: 75, spDefensa: 60, velocidad: 75 } }
+    },
+    {
+        id: 367,
+        name: "Huntail",
+        spriteId: 367,
+        before: { types: ["agua"], stats: { hp: 55, ataque: 104, defensa: 105, spAtaque: 94, spDefensa: 75, velocidad: 52 } },
+        modified: { types: ["agua", "siniestro"], stats: { hp: 65, ataque: 114, defensa: 105, spAtaque: 94, spDefensa: 75, velocidad: 72 } }
+    },
+    {
+        id: 368,
+        name: "Gorebyss",
+        spriteId: 368,
+        before: { types: ["agua"], stats: { hp: 55, ataque: 84, defensa: 105, spAtaque: 114, spDefensa: 75, velocidad: 52 } },
+        modified: { types: ["agua", "hada"], stats: { hp: 65, ataque: 84, defensa: 105, spAtaque: 124, spDefensa: 75, velocidad: 72 } }
+    },
+    {
+        id: 402,
+        name: "Kricketune",
+        spriteId: 402,
+        before: { types: ["bicho"], stats: { hp: 77, ataque: 85, defensa: 51, spAtaque: 55, spDefensa: 51, velocidad: 65 } },
+        modified: { types: ["bicho", "normal"], stats: { hp: 77, ataque: 120, defensa: 51, spAtaque: 55, spDefensa: 51, velocidad: 105 } }
+    },
+    {
+        id: 405,
+        name: "Luxray",
+        spriteId: 405,
+        before: { types: ["eléctrico"], stats: { hp: 80, ataque: 120, defensa: 79, spAtaque: 95, spDefensa: 79, velocidad: 70 } },
+        modified: { types: ["eléctrico", "siniestro"], stats: { hp: 80, ataque: 120, defensa: 79, spAtaque: 95, spDefensa: 79, velocidad: 90 } }
+    },
+    {
+        id: 428,
+        name: "Lopunny",
+        spriteId: 428,
+        before: { types: ["normal"], stats: { hp: 65, ataque: 76, defensa: 84, spAtaque: 54, spDefensa: 96, velocidad: 105 } },
+        modified: { types: ["normal", "hada"], stats: { hp: 65, ataque: 76, defensa: 84, spAtaque: 54, spDefensa: 96, velocidad: 105 } }
+    },
+    {
+        id: 440,
+        name: "Happiny",
+        spriteId: 440,
+        before: { types: ["normal"], stats: { hp: 100, ataque: 5, defensa: 5, spAtaque: 15, spDefensa: 65, velocidad: 30 } },
+        modified: { types: ["hada"], stats: { hp: 100, ataque: 5, defensa: 5, spAtaque: 15, spDefensa: 65, velocidad: 30 } }
+    },
+    {
+        id: 441,
+        name: "Chatot",
+        spriteId: 441,
+        before: { types: ["normal", "volador"], stats: { hp: 76, ataque: 65, defensa: 45, spAtaque: 92, spDefensa: 42, velocidad: 91 } },
+        modified: { types: ["normal", "volador"], stats: { hp: 85, ataque: 65, defensa: 55, spAtaque: 107, spDefensa: 55, velocidad: 100 } }
+    },
+    {
+        id: 477,
+        name: "Dusknoir",
+        spriteId: 477,
+        before: { types: ["fantasma"], stats: { hp: 45, ataque: 100, defensa: 135, spAtaque: 65, spDefensa: 135, velocidad: 45 } },
+        modified: { types: ["fantasma", "lucha"], stats: { hp: 45, ataque: 100, defensa: 135, spAtaque: 65, spDefensa: 135, velocidad: 45 } }
+    },
+    {
+        id: 563,
+        name: "Cofagrigus",
+        spriteId: 563,
+        before: { types: ["fantasma"], stats: { hp: 58, ataque: 50, defensa: 145, spAtaque: 95, spDefensa: 105, velocidad: 30 } },
+        modified: { types: ["fantasma", "acero"], stats: { hp: 58, ataque: 50, defensa: 145, spAtaque: 95, spDefensa: 105, velocidad: 30 } }
+    },
+    {
+        id: 576,
+        name: "Gothitelle",
+        spriteId: 576,
+        before: { types: ["psíquico"], stats: { hp: 70, ataque: 55, defensa: 95, spAtaque: 95, spDefensa: 110, velocidad: 65 } },
+        modified: { types: ["psíquico", "siniestro"], stats: { hp: 70, ataque: 55, defensa: 95, spAtaque: 95, spDefensa: 110, velocidad: 65 } }
+    },
+    {
+        id: 578,
+        name: "Duosion",
+        spriteId: 578,
+        before: { types: ["psíquico"], stats: { hp: 65, ataque: 40, defensa: 50, spAtaque: 125, spDefensa: 60, velocidad: 30 } },
+        modified: { types: ["psíquico", "lucha"], stats: { hp: 65, ataque: 40, defensa: 50, spAtaque: 125, spDefensa: 60, velocidad: 30 } }
+    },
+    {
+        id: 579,
+        name: "Reuniclus",
+        spriteId: 579,
+        before: { types: ["psíquico"], stats: { hp: 110, ataque: 65, defensa: 75, spAtaque: 125, spDefensa: 85, velocidad: 30 } },
+        modified: { types: ["psíquico", "lucha"], stats: { hp: 110, ataque: 125, defensa: 85, spAtaque: 125, spDefensa: 85, velocidad: 30 } }
+    },
+    {
+        id: 604,
+        name: "Eelektross",
+        spriteId: 604,
+        before: { types: ["eléctrico"], stats: { hp: 85, ataque: 115, defensa: 80, spAtaque: 105, spDefensa: 80, velocidad: 50 } },
+        modified: { types: ["eléctrico", "agua"], stats: { hp: 80, ataque: 115, defensa: 80, spAtaque: 85, spDefensa: 80, velocidad: 60 } }
+    },
+    {
+        id: 612,
+        name: "Haxorus",
+        spriteId: 612,
+        before: { types: ["dragón"], stats: { hp: 76, ataque: 147, defensa: 90, spAtaque: 60, spDefensa: 70, velocidad: 97 } },
+        modified: { types: ["dragón", "acero"], stats: { hp: 76, ataque: 147, defensa: 90, spAtaque: 60, spDefensa: 70, velocidad: 97 } }
+    },
+    {
+        id: 706,
+        name: "Goodra",
+        spriteId: 706,
+        before: { types: ["dragón"], stats: { hp: 90, ataque: 100, defensa: 70, spAtaque: 110, spDefensa: 150, velocidad: 80 } },
+        modified: { types: ["dragón", "veneno"], stats: { hp: 90, ataque: 100, defensa: 70, spAtaque: 110, spDefensa: 150, velocidad: 80 } }
+    },
+    {
+        id: 715,
+        name: "Noivern",
+        spriteId: 715,
+        before: { types: ["volador", "dragón"], stats: { hp: 85, ataque: 70, defensa: 80, spAtaque: 97, spDefensa: 80, velocidad: 123 } },
+        modified: { types: ["volador", "dragón"], stats: { hp: 85, ataque: 70, defensa: 80, spAtaque: 137, spDefensa: 80, velocidad: 123 } }
+    },
+    {
+        id: 10028,
+        name: "Mega-Banette",
+        spriteId: 10056,
+        before: { types: ["fantasma"], stats: { hp: 64, ataque: 165, defensa: 75, spAtaque: 93, spDefensa: 83, velocidad: 75 } },
+        modified: { types: ["fantasma", "normal"], stats: { hp: 64, ataque: 165, defensa: 75, spAtaque: 93, spDefensa: 83, velocidad: 75 } }
+    },
+    {
+        id: 10041,
+        name: "Mega-Gyarados",
+        spriteId: 10041,
+        before: { types: ["agua", "siniestro"], stats: { hp: 95, ataque: 155, defensa: 109, spAtaque: 70, spDefensa: 130, velocidad: 81 } },
+        modified: { types: ["agua", "siniestro"], stats: { hp: 97, ataque: 165, defensa: 110, spAtaque: 73, spDefensa: 110, velocidad: 85 } }
+    },
+    {
+        id: 10057,
+        name: "Mega-Absol",
+        spriteId: 10057,
+        before: { types: ["siniestro"], stats: { hp: 65, ataque: 150, defensa: 60, spAtaque: 115, spDefensa: 60, velocidad: 115 } },
+        modified: { types: ["siniestro", "hada"], stats: { hp: 65, ataque: 150, defensa: 60, spAtaque: 115, spDefensa: 60, velocidad: 115 } }
+    }];
+const EVOLUTION_DATA = [
+{
+    id: 65,
+    name: "Alakazam",
+    spriteId: 65,
+    preEvoId: 64,
+    preEvoName: "Kadabra",
+    modifiedMethod: "Subir de nivel 36 a Alakazam"
+},
+{
+    id: 68,
+    name: "Machamp",
+    spriteId: 68,
+    preEvoId: 67,
+    preEvoName: "Machoke",
+    modifiedMethod: "Subir de nivel 36 a Machamp"
+},
+{
+    id: 76,
+    name: "Golem",
+    spriteId: 76,
+    preEvoId: 75,
+    preEvoName: "Graveler",
+    modifiedMethod: "Subir de nivel 36 a Golem"
+},
+{
+    id: 80,
+    name: "Slowbro",
+    spriteId: 80,
+    preEvoId: 79,
+    preEvoName: "Slowpoke",
+    modifiedMethod: "Subir de nivel 37 a Slowbro"
+},
+{
+    id: 94,
+    name: "Gengar",
+    spriteId: 94,
+    preEvoId: 93,
+    preEvoName: "Haunter",
+    modifiedMethod: "Subir de nivel 36 a Gengar"
+},
+{
+    id: 122,
+    name: "Mr. Mime",
+    spriteId: 122,
+    preEvoId: 439,
+    preEvoName: "Mime Jr.",
+    modifiedMethod: "Subir de nivel 20 a Mr. Mime"
+},
+{
+    id: 185,
+    name: "Sudowoodo",
+    spriteId: 185,
+    preEvoId: 438,
+    preEvoName: "Bonsly",
+    modifiedMethod: "Subir de nivel 20 a Sudowoodo"
+},
+{
+    id: 186,
+    name: "Politoed",
+    spriteId: 186,
+    preEvoId: 61,
+    preEvoName: "Poliwhirl",
+    modifiedMethod: "Subir de nivel con objeto equipado Roca del Rey a Politoed"
+},
+{
+    id: 199,
+    name: "Slowking",
+    spriteId: 199,
+    preEvoId: 79,
+    preEvoName: "Slowpoke",
+    modifiedMethod: "Subir de nivel con objeto equipado Roca del Rey a Slowking"
+},
+{
+    id: 208,
+    name: "Steelix",
+    spriteId: 208,
+    preEvoId: 95,
+    preEvoName: "Onix",
+    modifiedMethod: "Subir de nivel con objeto equipado Revest. Metálico a Steelix"
+},
+{
+    id: 212,
+    name: "Scizor",
+    spriteId: 212,
+    preEvoId: 123,
+    preEvoName: "Scyther",
+    modifiedMethod: "Subir de nivel con objeto equipado Revest. Metálico a Scizor"
+},
+{
+    id: 230,
+    name: "Kingdra",
+    spriteId: 230,
+    preEvoId: 117,
+    preEvoName: "Seadra",
+    modifiedMethod: "Subir de nivel con objeto equipado Escamadragón a Kingdra"
+},
+{
+    id: 233,
+    name: "Porygon2",
+    spriteId: 233,
+    preEvoId: 137,
+    preEvoName: "Porygon",
+    modifiedMethod: "Subir de nivel con objeto equipado Mejora a Porygon2"
+},
+{
+    id: 367,
+    name: "Huntail",
+    spriteId: 367,
+    preEvoId: 366,
+    preEvoName: "Clamperl",
+    modifiedMethod: "Subir de nivel con objeto equipado Diente Marino a Huntail"
+},
+{
+    id: 368,
+    name: "Gorebyss",
+    spriteId: 368,
+    preEvoId: 366,
+    preEvoName: "Clamperl",
+    modifiedMethod: "Subir de nivel con objeto equipado Escama Marina a Gorebyss"
+},
+{
+    id: 424,
+    name: "Ambipom",
+    spriteId: 424,
+    preEvoId: 190,
+    preEvoName: "Aipom",
+    modifiedMethod: "Subir de nivel 30 a Ambipom"
+},
+{
+    id: 463,
+    name: "Lickilicky",
+    spriteId: 463,
+    preEvoId: 108,
+    preEvoName: "Lickitung",
+    modifiedMethod: "Subir de nivel 30 a Lickilicky"
+},
+{
+    id: 464,
+    name: "Rhyperior",
+    spriteId: 464,
+    preEvoId: 112,
+    preEvoName: "Rhydon",
+    modifiedMethod: "Subir de nivel con objeto equipado Protector a Rhyperior"
+},
+{
+    id: 465,
+    name: "Tangrowth",
+    spriteId: 465,
+    preEvoId: 114,
+    preEvoName: "Tangela",
+    modifiedMethod: "Subir de nivel 36 a Tangrowth"
+},
+{
+    id: 466,
+    name: "Electivire",
+    spriteId: 466,
+    preEvoId: 125,
+    preEvoName: "Electabuzz",
+    modifiedMethod: "Subir de nivel con objeto equipado Electrizador a Electivire"
+},
+{
+    id: 467,
+    name: "Magmortar",
+    spriteId: 467,
+    preEvoId: 126,
+    preEvoName: "Magmar",
+    modifiedMethod: "Subir de nivel con objeto equipado Magmatizador a Magmortar"
+},
+{
+    id: 469,
+    name: "Yanmega",
+    spriteId: 469,
+    preEvoId: 193,
+    preEvoName: "Yanma",
+    modifiedMethod: "Subir de nivel 33 a Yanmega"
+},
+{
+    id: 473,
+    name: "Mamoswine",
+    spriteId: 473,
+    preEvoId: 221,
+    preEvoName: "Piloswine",
+    modifiedMethod: "Subir de nivel 40 a Mamoswine"
+},
+{
+    id: 474,
+    name: "Porygon-Z",
+    spriteId: 474,
+    preEvoId: 233,
+    preEvoName: "Porygon2",
+    modifiedMethod: "Subir de nivel con objeto equipado Disco Extraño a Porygon-Z"
+},
+{
+    id: 526,
+    name: "Gigalith",
+    spriteId: 526,
+    preEvoId: 525,
+    preEvoName: "Boldore",
+    modifiedMethod: "Subir de nivel 36 a Gigalith"
+},
+{
+    id: 534,
+    name: "Conkeldurr",
+    spriteId: 534,
+    preEvoId: 533,
+    preEvoName: "Gurdurr",
+    modifiedMethod: "Subir de nivel 38 a Conkeldurr"
+},
+{
+    id: 687,
+    name: "Malamar",
+    spriteId: 687,
+    preEvoId: 686,
+    preEvoName: "Inkay",
+    modifiedMethod: "Subir de nivel 30 a Malamar"
+},
+{
+    id: 709,
+    name: "Trevenant",
+    spriteId: 709,
+    preEvoId: 708,
+    preEvoName: "Phantump",
+    modifiedMethod: "Subir de nivel 36 a Trevenant"
+},
+{
+    id: 711,
+    name: "Gourgeist",
+    spriteId: 711,
+    preEvoId: 710,
+    preEvoName: "Pumpkaboo",
+    modifiedMethod: "Subir de nivel 36 a Gourgeist"
+}
+];
+
+        let currentMainTab = 'stats';
+        let filteredList = [];
+        let filteredEvoList = [];
+        let activePokemon = null;
+        let activeEvoPokemon = null;
+        let activeMode = 'modified';
+
+        const STAT_LABELS = {
+            hp: 'PS (Vida)',
+            ataque: 'Ataque',
+            defensa: 'Defensa',
+            spAtaque: 'At. Especial',
+            spDefensa: 'Def. Especial',
+            velocidad: 'Velocidad'
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            filteredList = [...POKEMON_DATA];
+            filteredEvoList = [...EVOLUTION_DATA];
+            renderGrid();
+            renderEvolutionGrid();
+            updateCounter();
+        });
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            const btnStats = document.getElementById('mainTabStats');
+            const btnEvo = document.getElementById('mainTabEvolutions');
+            const gridStats = document.getElementById('pokemonGrid');
+            const gridEvo = document.getElementById('evolutionGrid');
+            const sectionTitle = document.getElementById('sectionTitle');
+
+            if (tab === 'stats') {
+                btnStats.className = "px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-pokeRed shadow-md flex items-center gap-2 transition-all";
+                btnEvo.className = "px-6 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white flex items-center gap-2 transition-all";
+                gridStats.classList.remove('hidden');
+                gridEvo.classList.add('hidden');
+                sectionTitle.innerHTML = `<i class="fa-solid fa-list-ul text-pokeRed"></i><span>Pokémon con Cambios en Stats y Tipos</span>`;
+            } else {
+                btnEvo.className = "px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-blue-600 shadow-md flex items-center gap-2 transition-all";
+                btnStats.className = "px-6 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white flex items-center gap-2 transition-all";
+                gridEvo.classList.remove('hidden');
+                gridStats.classList.add('hidden');
+                sectionTitle.innerHTML = `<i class="fa-solid fa-code-branch text-blue-500"></i><span>Pokémon con Modificaciones en Evoluciones</span>`;
+            }
+            updateCounter();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('pokemonGrid');
+            const noResults = document.getElementById('noResults');
+
+            if (filteredList.length === 0 && currentMainTab === 'stats') {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                noResults.classList.add('flex');
+                return;
+            }
+
+            grid.innerHTML = filteredList.map(pkmn => {
+                const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pkmn.spriteId}.png`;
+                const displayId = String(pkmn.id).padStart(3, '0');
+
+                return `
+                    <div onclick="openModal(${pkmn.id})" class="glass-card rounded-2xl p-4 flex flex-col items-center justify-between cursor-pointer hover:border-pokeRed/50 hover:bg-slate-800/80 hover:-translate-y-1.5 transition-all duration-300 group relative shadow-md">
+                        <span class="absolute top-3 right-3 text-xs font-bold text-slate-500 group-hover:text-slate-300 transition-colors">#${displayId}</span>
+                        <div class="my-3 w-24 h-24 flex items-center justify-center relative">
+                            <div class="absolute inset-0 bg-white/5 rounded-full group-hover:scale-110 transition-transform"></div>
+                            <img src="${imgUrl}" alt="${pkmn.name}" class="w-full h-full object-contain filter drop-shadow group-hover:scale-110 transition-transform duration-300 z-10" loading="lazy"/>
+                        </div>
+                        <div class="text-center w-full">
+                            <h3 class="font-bold text-slate-100 text-sm group-hover:text-yellow-400 transition-colors capitalize truncate">${pkmn.name}</h3>
+                            <div class="flex justify-center gap-1 mt-2">
+                                ${pkmn.modified.types.map(t => `<span class="type-${t} text-[10px] uppercase font-bold px-2 py-0.5 rounded-md tracking-wider">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderEvolutionGrid() {
+            const grid = document.getElementById('evolutionGrid');
+            const noResults = document.getElementById('noResults');
+
+            if (filteredEvoList.length === 0 && currentMainTab === 'evolutions') {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                noResults.classList.add('flex');
+                return;
+            }
+
+            grid.innerHTML = filteredEvoList.map(pkmn => {
+                const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pkmn.spriteId}.png`;
+                const displayId = String(pkmn.id).padStart(3, '0');
+
+                return `
+                    <div onclick="openEvoModal(${pkmn.id})" class="glass-card rounded-2xl p-4 flex flex-col items-center justify-between cursor-pointer hover:border-blue-500/50 hover:bg-slate-800/80 hover:-translate-y-1.5 transition-all duration-300 group relative shadow-md">
+                        <span class="absolute top-3 right-3 text-xs font-bold text-slate-500 group-hover:text-slate-300 transition-colors">#${displayId}</span>
+                        <div class="my-3 w-24 h-24 flex items-center justify-center relative">
+                            <div class="absolute inset-0 bg-white/5 rounded-full group-hover:scale-110 transition-transform"></div>
+                            <img src="${imgUrl}" alt="${pkmn.name}" class="w-full h-full object-contain filter drop-shadow group-hover:scale-110 transition-transform duration-300 z-10" loading="lazy"/>
+                        </div>
+                        <div class="text-center w-full">
+                            <h3 class="font-bold text-slate-100 text-sm group-hover:text-blue-400 transition-colors capitalize truncate">${pkmn.name}</h3>
+                            <div class="mt-2">
+                                <span class="type-agua text-[10px] uppercase font-bold px-2 py-0.5 rounded-md tracking-wider">Evolución</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterPokemon() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clearSearch');
+
+            if (query.length > 0) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+
+            filteredList = POKEMON_DATA.filter(pkmn => pkmn.name.toLowerCase().includes(query) || String(pkmn.id).includes(query));
+            filteredEvoList = EVOLUTION_DATA.filter(pkmn => pkmn.name.toLowerCase().includes(query) || String(pkmn.id).includes(query));
+
+            renderGrid();
+            renderEvolutionGrid();
+            updateCounter();
+        }
+
+        function clearSearchInput() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            filterPokemon();
+            input.focus();
+        }
+
+        function resetFilter() {
+            clearSearchInput();
+        }
+
+        function updateCounter() {
+            const counter = document.getElementById('counterText');
+            if (currentMainTab === 'stats') {
+                counter.textContent = `${filteredList.length} / ${POKEMON_DATA.length} Pokémon`;
+            } else {
+                counter.textContent = `${filteredEvoList.length} / ${EVOLUTION_DATA.length} Pokémon`;
+            }
+        }
+
+        function openModal(id) {
+            activePokemon = POKEMON_DATA.find(p => p.id === id);
+            if (!activePokemon) return;
+            activeMode = 'modified';
+
+            const modal = document.getElementById('pokemonModal');
+            const container = document.getElementById('modalContainer');
+
+            document.getElementById('modalPokemonId').textContent = `#${String(activePokemon.id).padStart(3, '0')}`;
+            document.getElementById('modalPokemonName').textContent = activePokemon.name;
+            document.getElementById('modalPokemonImg').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${activePokemon.spriteId}.png`;
+
+            updateModalContent();
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-95');
+            container.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('pokemonModal');
+            const container = document.getElementById('modalContainer');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+            document.body.style.overflow = 'auto';
+        }
+
+        function switchTab(mode) {
+            activeMode = mode;
+            const btnBefore = document.getElementById('tabBeforeBtn');
+            const btnMod = document.getElementById('tabModifiedBtn');
+
+            if (mode === 'before') {
+                btnBefore.className = "tab-btn py-2.5 px-4 rounded-lg font-bold text-sm text-white bg-slate-700 shadow-md flex items-center justify-center gap-2";
+                btnMod.className = "tab-btn py-2.5 px-4 rounded-lg font-bold text-sm text-slate-400 flex items-center justify-center gap-2";
+            } else {
+                btnMod.className = "tab-btn py-2.5 px-4 rounded-lg font-bold text-sm text-white bg-pokeRed shadow-md flex items-center justify-center gap-2";
+                btnBefore.className = "tab-btn py-2.5 px-4 rounded-lg font-bold text-sm text-slate-400 flex items-center justify-center gap-2";
+            }
+            updateModalContent();
+        }
+
+        function updateModalContent() {
+            if (!activePokemon) return;
+            const data = activePokemon[activeMode];
+            const otherData = activePokemon[activeMode === 'modified' ? 'before' : 'modified'];
+
+            const typesContainer = document.getElementById('modalTypesContainer');
+            typesContainer.innerHTML = data.types.map(t => `<span class="type-${t} text-xs uppercase font-extrabold px-3 py-1 rounded-lg shadow-sm tracking-wider">${t}</span>`).join('');
+
+            document.getElementById('modeTitle').textContent = activeMode === 'modified' ? 'Stats Modificadas' : 'Stats Originales';
+            const total = Object.values(data.stats).reduce((a, b) => a + b, 0);
+            document.getElementById('totalStats').textContent = `BST: ${total}`;
+
+            const statsContainer = document.getElementById('statsContainer');
+            statsContainer.innerHTML = Object.keys(data.stats).map(key => {
+                const val = data.stats[key];
+                const prevVal = otherData.stats[key];
+                const diff = val - prevVal;
+                let diffBadge = '';
+                if (activeMode === 'modified' && diff !== 0) {
+                    const color = diff > 0 ? 'text-emerald-400' : 'text-rose-400';
+                    const sign = diff > 0 ? '+' : '';
+                    diffBadge = `<span class="text-[10px] font-bold ${color} ml-1.5">(${sign}${diff})</span>`;
+                }
+
+                let barColor = val >= 110 ? 'bg-emerald-400' : val >= 80 ? 'bg-yellow-400' : val >= 50 ? 'bg-orange-400' : 'bg-red-500';
+                const percentage = Math.min(100, Math.round((val / 180) * 100));
+
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span class="text-slate-400">${STAT_LABELS[key]}</span>
+                            <div class="flex items-center"><span class="text-white font-bold">${val}</span>${diffBadge}</div>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden p-0.5 border border-slate-700/50">
+                            <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openEvoModal(id) {
+            activeEvoPokemon = EVOLUTION_DATA.find(p => p.id === id);
+            if (!activeEvoPokemon) return;
+
+            const modal = document.getElementById('evoModal');
+            const container = document.getElementById('evoModalContainer');
+
+            document.getElementById('evoModalId').textContent = `#${String(activeEvoPokemon.id).padStart(3, '0')}`;
+            document.getElementById('evoModalName').textContent = activeEvoPokemon.name;
+            
+            document.getElementById('evoPreImg').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${activeEvoPokemon.preEvoId}.png`;
+            document.getElementById('evoPreName').textContent = activeEvoPokemon.preEvoName;
+
+            document.getElementById('evoPostImg').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${activeEvoPokemon.spriteId}.png`;
+            document.getElementById('evoPostName').textContent = activeEvoPokemon.name;
+
+            document.getElementById('evoMethodText').textContent = activeEvoPokemon.modifiedMethod;
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-95');
+            container.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEvoModal() {
+            const modal = document.getElementById('evoModal');
+            const container = document.getElementById('evoModalContainer');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeEvoModal();
+            }
+        });
+
+        document.getElementById('pokemonModal').addEventListener('click', (e) => {
+            if (e.target.id === 'pokemonModal') closeModal();
+        });
+
+        document.getElementById('evoModal').addEventListener('click', (e) => {
+            if (e.target.id === 'evoModal') closeEvoModal();
+        });
+    </script>
+</body>
+</html>
